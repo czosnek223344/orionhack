@@ -19,14 +19,15 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Grant execute permission
-        run: chmod +x ./gradlew
+      - name: Make gradlew executable
+        run: chmod +x ./orionhack/gradlew   # adjust if your gradlew is elsewhere
 
       - name: Build with Gradle
-        run: ./gradlew build --no-daemon
+        working-directory: ./orionhack        # ← Change this if your build files are in a subfolder
+        run: ../orionhack/gradlew build --no-daemon   # adjust path if needed
 
-      - name: Upload artifact
+      - name: Upload built jar
         uses: actions/upload-artifact@v4
         with:
           name: orionhack-build
-          path: build/libs/*.jar
+          path: orionhack/build/libs/*.jar

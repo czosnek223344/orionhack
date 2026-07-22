@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "com.orionhack.addon.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "OrionMixin",
+    "CustomPlayerMoveAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

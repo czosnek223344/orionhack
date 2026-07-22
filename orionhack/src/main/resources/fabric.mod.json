@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "orionhack",
+  "version": "${version}",
+  "name": "orionhack",
+  "description": "Vibecoded pice of shit.",
+  "authors": [
+    "4Fix"
+  ],
+  "contact": {
+    "sources": "https://github.com/czosnek223344/orionhack"
+  },
+  "icon": "assets/orionhack/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "meteor": [
+      "com.orionhack.addon.OrionHack"
+    ]
+  },
+  "mixins": [
+    "orionhack.mixins.json"
+  ],
+  "custom": {
+    "meteor-client:color": "225,25,25",
+    "modmenu": {
+      "parent": {
+        "id": "meteor-client"
+      }
+    }
+  },
+  "depends": {
+    "java": ">=21",
+    "minecraft": ["${mc_version}"],
+    "meteor-client": "*"
+  }
+}

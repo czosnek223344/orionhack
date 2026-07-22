@@ -16,12 +16,12 @@ public class Settings extends Module {
 
     public final Setting<Double> maceKillHeight = sgGeneral.add(new DoubleSetting.Builder()
         .name("mace-kill-height")
-        .description("height for mace kill attack.")
-        .defaultValue(20.0)
+        .description("height for mace kill.")
+        .defaultValue(30.0)
         .min(0.0)
-        .max(30.0)
+        .max(50.0)
         .sliderMin(0.0)
-        .sliderMax(30.0)
+        .sliderMax(50.0)
         .build()
     );
 

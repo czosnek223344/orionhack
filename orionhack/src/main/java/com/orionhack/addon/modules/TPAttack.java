@@ -2,6 +2,7 @@ package com.orionhack.addon.modules;
 
 import com.orionhack.addon.OrionHack;
 import com.orionhack.addon.utils.MaceKillUtil;
+import com.orionhack.addon.utils.PredictionUtil;
 import com.orionhack.addon.utils.TPUtil;
 import com.orionhack.addon.utils.TargetUtil;
 import meteordevelopment.meteorclient.events.world.TickEvent;
@@ -89,7 +90,7 @@ public class TPAttack extends Module {
         var target = TargetUtil.getClosestBlacklisted(maxRange.get());
         if (target == null) return;
 
-        Vec3d targetPos = target.getBoundingBox().getCenter();
+        Vec3d targetPos = PredictionUtil.getPredictedPos(target, 2.0);
 
         TPUtil.tpTo(targetPos);
         MaceKillUtil.hit(target);

@@ -4,10 +4,10 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.Hand;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import com.orionhack.addon.modules.Settings;
-import com.orionhack.addon.utils.TpUtil;
 
 public class MaceKillUtil {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
@@ -28,14 +28,17 @@ public class MaceKillUtil {
             finalHeight = settingsModule.maceKillHeight.get();
         }
 
-        TpUtil.teleport(x, y + finalHeight, z);
-        
-        TpUtil.teleport(x, y, z);
+        teleport(x, y + finalHeight, z);
+        teleport(x, y, z);
 
         mc.player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.attack(target, mc.player.isSneaking()));
 
         mc.player.swingHand(Hand.MAIN_HAND);
         mc.player.networkHandler.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+    }
+
+    private static void teleport(double x, double y, double z) {
+        mc.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(x, y, z, false, false));
     }
 
     public static void setMaceKillHeight(double height) {

@@ -1,40 +1,38 @@
-// MaceKillUtil.java
 package com.orionhack.addon.utils;
 
-import net.minecraft.client.MinecraftClient;
+import com.orionhack.addon.modules.Settings;
 import net.minecraft.entity.Entity;
-import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.Hand;
+import static meteordevelopment.meteorclient.MeteorClient.mc;
 
 public class MaceKillUtil {
-    private static final MinecraftClient mc = MinecraftClient.getInstance();
 
-    private static double MACE_KILL_HEIGHT = 30.0;
+    public static void executeMaceKill(Entity target) {
+        if (!Settings.maceKillEnabled) {
+            return;
+        }
 
-    public static void hit(Entity target) {
-        if (mc.player == null || target == null) return;
+        if (mc.player == null || target == null) {
+            return;
+        }
 
-        double x = mc.player.getX();
-        double y = mc.player.getY();
-        double z = mc.player.getZ();
+        double pX = mc.player.getX();
+        double pY = mc.player.getY();
+        double pZ = mc.player.getZ();
 
-        mc.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(
-            x, y + MACE_KILL_HEIGHT, z, false, false
-        ));
+        double tX = target.getX();
+        double tY = target.getY();
+        double tZ = target.getZ();
 
-        mc.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(
-            x, y, z, false, false
-        ));
+        double tpHeight = Settings.maceHeightAmount;
 
-        mc.player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.attack(target, mc.player.isSneaking()));
+        TpUtil.teleport(pX, pY + tpHeight, pZ);
 
+        mc.player.fallDistance = (float) tpHeight;
+
+        TpUtil.teleport(tX, tY, tZ);
+
+        mc.interactionManager.attackEntity(mc.player, target);
         mc.player.swingHand(Hand.MAIN_HAND);
-        mc.player.networkHandler.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
-    }
-
-    public static void setMaceKillHeight(double height) {
-        MACE_KILL_HEIGHT = height;
     }
 }

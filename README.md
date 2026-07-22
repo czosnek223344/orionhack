@@ -33,4 +33,4 @@ Then drop into mods folder with meteor for 1.21.11
 
 
 
-Made by person who never made meteor addon before and which has skill issue. Woolfist chill its not real OrionHack 😭.
+Made by person who has never made meteor addon before and which has skill issue. Woolfist chill its not real OrionHack 😭.

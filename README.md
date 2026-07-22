@@ -1,6 +1,8 @@
 # orionhack
 OrionHack Addon for meteor client 1.21.11
 
+<img src="attachment.gif">
+
 # Modules
 
 **TPAttack** Teleports you to blacklisted player and attacks them with mace. It has auto attack which attacks players in 200 blocks (max) range.
@@ -10,6 +12,18 @@ OrionHack Addon for meteor client 1.21.11
 **Settings** Some settings.
 
 **HitBack** Attacks blacklisted players when they touch you.
+
+# commands and other info
+
+**commands**
+
+```.blacklist add ItsDumzy```
+
+```.blacklist remove ItsDumzy```
+
+Also there is blacklist tab in meteor menu, just like friends, but you want to mace them.
+
+Turn on settings module and set mace attack height.
 
 # quick guide
 

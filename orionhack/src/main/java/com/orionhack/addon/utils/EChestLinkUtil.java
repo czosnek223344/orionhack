@@ -45,7 +45,7 @@ public class EChestLinkUtil {
 
     private static boolean isAtPosition(Vec3d target) {
         if (mc.player == null) return false;
-        return mc.player.getPos().squaredDistanceTo(target) < 0.01;
+        return new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ()).squaredDistanceTo(target) < 0.01;
     }
 
     private static void openEC(BlockPos pos) {
@@ -64,7 +64,7 @@ public class EChestLinkUtil {
 
     public static Vec3d findNearestEC(double maxRange) {
         if (mc.world == null || mc.player == null) return null;
-        Vec3d playerPos = mc.player.getPos();
+        Vec3d playerPos = new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
         BlockPos playerBlockPos = mc.player.getBlockPos();
         Vec3d closest = null;
         double closestDist = Double.MAX_VALUE;

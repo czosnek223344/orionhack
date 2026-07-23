@@ -17,7 +17,7 @@ import net.minecraft.util.math.Vec3d;
 public class HitBack extends Module {
 
     public HitBack() {
-        super(OrionHack.CATEGORY, "hitback", "i hate this module");
+        super(OrionHack.CATEGORY, "hitback", "Auto TP + mace when hit by blacklisted player or mob");
     }
 
     @EventHandler
@@ -40,9 +40,12 @@ public class HitBack extends Module {
     private void attackBack(Entity target) {
         if (target == null) return;
 
-        Vec3d targetPos = (target instanceof PlayerEntity p) 
-            ? PredictionUtil.getPredictedPos(p, 2.0) 
-            : target.getPos();
+        Vec3d targetPos;
+        if (target instanceof PlayerEntity p) {
+            targetPos = PredictionUtil.getPredictedPos(p, 2.0);
+        } else {
+            targetPos = new Vec3d(target.getX(), target.getY(), target.getZ());
+        }
 
         TPUtil.tpTo(targetPos);
         MaceKillUtil.hit(target);

@@ -6,8 +6,8 @@ import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.Hand;
-import com.orionhack.addon.modules.Settings;
 import meteordevelopment.meteorclient.systems.modules.Modules;
+import com.orionhack.addon.modules.Settings;
 
 public class MaceKillUtil {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
@@ -18,7 +18,7 @@ public class MaceKillUtil {
         double height = 10.0;
         Settings settingsModule = Modules.get().get(Settings.class);
         if (settingsModule != null && settingsModule.isActive()) {
-            height = settingsModule.maceKillHeight.get();
+            height = settingsModule.maceKillHeight.get() != null ? settingsModule.maceKillHeight.get() : 10.0;
         }
 
         double x = mc.player.getX();

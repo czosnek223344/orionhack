@@ -17,7 +17,7 @@ import net.minecraft.util.math.Vec3d;
 public class HitBack extends Module {
 
     public HitBack() {
-        super(OrionHack.CATEGORY, "hitback", "I HATE THIS MODULE");
+        super(OrionHack.CATEGORY, "hitback", "i hate this module");
     }
 
     @EventHandler

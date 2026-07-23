@@ -5,24 +5,28 @@ import com.orionhack.addon.utils.Blacklist;
 import com.orionhack.addon.utils.MaceKillUtil;
 import com.orionhack.addon.utils.PredictionUtil;
 import com.orionhack.addon.utils.TPUtil;
-import meteordevelopment.meteorclient.events.entity.EntityDamageEvent;
+import meteordevelopment.meteorclient.events.packets.PacketEvent;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.packet.s2c.play.EntityDamageS2CPacket;
+import net.minecraft.util.math.Vec3d;
 
 public class HitBack extends Module {
 
     public HitBack() {
-        super(OrionHack.CATEGORY, "hitback", "MaceKillUtil.hit() players trying to touch your balls");
+        super(OrionHack.CATEGORY, "hitback", "I HATE THIS MODULE");
     }
 
     @EventHandler
-    private void onDamage(EntityDamageEvent event) {
-        if (mc.player == null || event.entity != mc.player) return;
+    private void onReceivePacket(PacketEvent.Receive event) {
+        if (!(event.packet instanceof EntityDamageS2CPacket damagePacket)) return;
 
-        Entity attacker = event.source.getAttacker();
+        if (mc.player == null || damagePacket.entityId() != mc.player.getId()) return;
+
+        Entity attacker = mc.world.getEntityById(damagePacket.sourceCauseId());
         if (attacker == null) return;
 
         boolean isBlacklistedPlayer = attacker instanceof PlayerEntity p && Blacklist.isBlacklisted(p.getName().getString());
@@ -36,7 +40,9 @@ public class HitBack extends Module {
     private void attackBack(Entity target) {
         if (target == null) return;
 
-        var targetPos = PredictionUtil.getPredictedPos(target, 2.0);
+        Vec3d targetPos = (target instanceof PlayerEntity p) 
+            ? PredictionUtil.getPredictedPos(p, 2.0) 
+            : target.getPos();
 
         TPUtil.tpTo(targetPos);
         MaceKillUtil.hit(target);

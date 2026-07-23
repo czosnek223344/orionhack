@@ -1,41 +1,57 @@
-package com.orionhack.addon.utils;
+package com.orionhack.addon.modules;
 
-import net.minecraft.client.MinecraftClient;
+import com.orionhack.addon.OrionHack;
+import com.orionhack.addon.utils.Blacklist;
+import com.orionhack.addon.utils.MaceKillUtil;
+import com.orionhack.addon.utils.PredictionUtil;
+import com.orionhack.addon.utils.TPUtil;
+import meteordevelopment.meteorclient.events.world.TickEvent;
+import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.Entity;
-import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
-import net.minecraft.util.Hand;
-import meteordevelopment.meteorclient.systems.modules.Modules;
-import com.orionhack.addon.modules.Settings;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.Vec3d;
 
-public class MaceKillUtil {
-    private static final MinecraftClient mc = MinecraftClient.getInstance();
+public class HitBack extends Module {
 
-    public static void hit(Entity target) {
-        if (mc.player == null || target == null) return;
+    private Entity lastAttacker = null;
 
-        double height = 10.0;
-        Settings settingsModule = Modules.get().get(Settings.class);
-        if (settingsModule != null && settingsModule.isActive()) {
-            height = settingsModule.maceKillHeight.get() != null ? settingsModule.maceKillHeight.get() : 10.0;
+    public HitBack() {
+        super(OrionHack.CATEGORY, "hitback", "MaceKillUtil.hit() players trying to touch your balls");
+    }
+
+    @EventHandler
+    private void onTick(TickEvent.Pre event) {
+        if (mc.player == null || mc.world == null) return;
+
+        if (mc.player.hurtTime > 0) {
+            Entity attacker = mc.player.getAttacker();
+            if (attacker != null && attacker != lastAttacker) {
+                boolean isBlacklistedPlayer = attacker instanceof PlayerEntity p && Blacklist.isBlacklisted(p.getName().getString());
+                boolean isMob = attacker instanceof MobEntity;
+
+                if (isBlacklistedPlayer || isMob) {
+                    attackBack(attacker);
+                    lastAttacker = attacker;
+                }
+            }
+        } else {
+            lastAttacker = null;
+        }
+    }
+
+    private void attackBack(Entity target) {
+        if (target == null) return;
+
+        Vec3d targetPos;
+        if (target instanceof PlayerEntity player) {
+            targetPos = PredictionUtil.getPredictedPos(player, 2.0);
+        } else {
+            targetPos = target.getPos();
         }
 
-        double x = mc.player.getX();
-        double y = mc.player.getY();
-        double z = mc.player.getZ();
-
-        mc.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(
-            x, y + height, z, false, false
-        ));
-
-        mc.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(
-            x, y, z, false, false
-        ));
-
-        mc.player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.attack(target, mc.player.isSneaking()));
-
-        mc.player.swingHand(Hand.MAIN_HAND);
-        mc.player.networkHandler.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+        TPUtil.tpTo(targetPos);
+        MaceKillUtil.hit(target);
     }
 }

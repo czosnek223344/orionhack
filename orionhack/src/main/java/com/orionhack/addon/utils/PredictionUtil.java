@@ -10,9 +10,9 @@ public class PredictionUtil {
     public static Vec3d getPredictedPos(PlayerEntity target, double ticks) {
         if (target == null || mc.player == null) return null;
 
-        double deltaX = target.getX() - target.prevX;
-        double deltaY = target.getY() - target.prevY;
-        double deltaZ = target.getZ() - target.prevZ;
+        double deltaX = target.getVelocity().x;
+        double deltaY = target.getVelocity().y;
+        double deltaZ = target.getVelocity().z;
 
         double distance = mc.player.squaredDistanceTo(target);
         double latencyComp = Math.sqrt(distance) * 0.12;

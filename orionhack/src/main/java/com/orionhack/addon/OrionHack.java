@@ -4,6 +4,7 @@ import com.orionhack.addon.commands.BlacklistCommand;
 import com.orionhack.addon.hud.OrionHud;
 import com.orionhack.addon.modules.TPAttack;
 import com.orionhack.addon.modules.BetterNoFall;
+import com.orionhack.addon.modules.AutoEchestLink;
 import com.orionhack.addon.modules.Settings;
 import com.orionhack.addon.modules.HitBack;
 import com.orionhack.addon.utils.Blacklist;
@@ -29,6 +30,7 @@ public class OrionHack extends MeteorAddon {
         Blacklist.load();
 
         Modules.get().add(new TPAttack());
+        Modules.get().add(new AutoEchestLink());
         Modules.get().add(new BetterNoFall());
         Modules.get().add(new Settings());
         Modules.get().add(new HitBack());

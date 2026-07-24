@@ -10,6 +10,7 @@ import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.orbit.EventHandler;
+import meteordevelopment.meteorclient.utils.misc.Keybind;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.util.InputUtil;
 
@@ -32,24 +33,24 @@ public class AutoEchestLink extends Module {
         .build()
     );
 
-    private final Setting<KeybindSetting> toggleKey = sgGeneral.add(new KeybindSetting.Builder()
+    private final Setting<Keybind> toggleKey = sgGeneral.add(new KeybindSetting.Builder()
         .name("toggle-key")
-        .description("Key to show/hide EC GUI")
-        .defaultValue(InputUtil.fromTranslationKey("key.keyboard.h"))
+        .description("Key to show/hide EC GUI (H)")
+        .defaultValue(Keybind.fromKey(InputUtil.GLFW_KEY_H))
         .build()
     );
 
-    private final Setting<KeybindSetting> getMaceKey = sgGeneral.add(new KeybindSetting.Builder()
+    private final Setting<Keybind> getMaceKey = sgGeneral.add(new KeybindSetting.Builder()
         .name("get-mace-key")
-        .description("N - Test take mace from hidden EC")
-        .defaultValue(InputUtil.fromTranslationKey("key.keyboard.n"))
+        .description("Key to take mace (N)")
+        .defaultValue(Keybind.fromKey(InputUtil.GLFW_KEY_N))
         .build()
     );
 
     private boolean isLinked = false;
 
     public AutoEchestLink() {
-        super(OrionHack.CATEGORY, "auto-echest-link", "Auto opens nearest EC via EChestLinkUtil, keeps GUI open.");
+        super(OrionHack.CATEGORY, "auto-echest-link", "Auto opens nearest EC via EChestLinkUtil.");
     }
 
     @EventHandler
@@ -65,7 +66,7 @@ public class AutoEchestLink extends Module {
             if (ecGuiOpen) {
                 mc.setScreen(null);
             } else if (isLinked) {
-                // Re-show logic if needed
+                // Re-show GUI if needed
             }
         }
 

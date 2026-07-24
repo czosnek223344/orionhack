@@ -2,13 +2,14 @@ package com.orionhack.addon.utils;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
 
 public class EChestLinkUtil {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
@@ -18,7 +19,7 @@ public class EChestLinkUtil {
 
     public static boolean open(Vec3d coords) {
         if (mc.player == null || mc.world == null) return false;
-        BlockPos pos = new BlockPos((int) coords.x, (int) coords.y - 1, (int) coords.z); // adjust to EC base
+        BlockPos pos = new BlockPos((int) coords.x, (int) coords.y - 1, (int) coords.z);
         targetEC = pos;
         opening = true;
         tickCounter = 0;
@@ -68,7 +69,7 @@ public class EChestLinkUtil {
         BlockPos playerBlockPos = mc.player.getBlockPos();
         Vec3d closest = null;
         double closestDist = Double.MAX_VALUE;
-        int range = (int) Math.min(32, Math.ceil(maxRange)); // render safe
+        int range = (int) Math.min(32, Math.ceil(maxRange));
         for (int x = -range; x <= range; x++) {
             for (int y = -range / 2; y <= range / 2; y++) {
                 for (int z = -range; z <= range; z++) {
@@ -85,5 +86,20 @@ public class EChestLinkUtil {
             }
         }
         return closest;
+    }
+
+    public static void get(String itemName) {
+        if (mc.player == null || mc.currentScreen == null) return;
+        String lowerName = itemName.toLowerCase();
+        for (int i = 0; i < mc.player.currentScreenHandler.slots.size(); i++) {
+            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
+            if (stack.getItem() == Items.MACE || 
+                stack.getName().getString().toLowerCase().contains(lowerName)) {
+                // TODO: Add actual click logic to take item out (quick move etc.)
+                // For now just logs - implement packet clicks as needed
+                System.out.println("Found mace at slot " + i);
+                break;
+            }
+        }
     }
 }

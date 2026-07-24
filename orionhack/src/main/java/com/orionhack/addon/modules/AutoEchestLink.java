@@ -3,12 +3,15 @@ package com.orionhack.addon.modules;
 import com.orionhack.addon.OrionHack;
 import com.orionhack.addon.utils.EChestLinkUtil;
 import meteordevelopment.meteorclient.events.world.TickEvent;
+import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.DoubleSetting;
+import meteordevelopment.meteorclient.settings.KeybindSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.util.InputUtil;
 
 public class AutoEchestLink extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
@@ -22,6 +25,29 @@ public class AutoEchestLink extends Module {
         .build()
     );
 
+    private final Setting<Boolean> hideGui = sgGeneral.add(new BoolSetting.Builder()
+        .name("hide-gui")
+        .description("Hide GUI after link")
+        .defaultValue(true)
+        .build()
+    );
+
+    private final Setting<KeybindSetting> toggleKey = sgGeneral.add(new KeybindSetting.Builder()
+        .name("toggle-key")
+        .description("Key to show/hide EC GUI")
+        .defaultValue(InputUtil.fromTranslationKey("key.keyboard.h"))
+        .build()
+    );
+
+    private final Setting<KeybindSetting> getMaceKey = sgGeneral.add(new KeybindSetting.Builder()
+        .name("get-mace-key")
+        .description("N - Test take mace from hidden EC")
+        .defaultValue(InputUtil.fromTranslationKey("key.keyboard.n"))
+        .build()
+    );
+
+    private boolean isLinked = false;
+
     public AutoEchestLink() {
         super(OrionHack.CATEGORY, "auto-echest-link", "Auto opens nearest EC via EChestLinkUtil, keeps GUI open.");
     }
@@ -31,14 +57,30 @@ public class AutoEchestLink extends Module {
         if (mc.player == null || mc.world == null) return;
         EChestLinkUtil.tick();
 
-        boolean ecGuiOpen = mc.currentScreen != null && mc.currentScreen.getTitle() != null &&
+        boolean ecGuiOpen = mc.currentScreen instanceof HandledScreen &&
+            mc.currentScreen.getTitle() != null &&
             mc.currentScreen.getTitle().getString().toLowerCase().contains("ender");
 
-        if (!ecGuiOpen && !EChestLinkUtil.isOpening()) {
-            Vec3d nearest = EChestLinkUtil.findNearestEC(maxRange.get());
-            if (nearest != null) {
-                EChestLinkUtil.open(nearest);
+        if (toggleKey.get().isPressed()) {
+            if (ecGuiOpen) {
+                mc.setScreen(null);
+            } else if (isLinked) {
+                // Re-show logic if needed
             }
+        }
+
+        if (getMaceKey.get().isPressed()) {
+            EChestLinkUtil.get("mace");
+        }
+
+        if (hideGui.get() && ecGuiOpen && !isLinked) {
+            mc.setScreen(null);
+            isLinked = true;
+            info("echest linked");
+        }
+
+        if (!isLinked && !EChestLinkUtil.isOpening()) {
+            EChestLinkUtil.open(EChestLinkUtil.findNearestEC(maxRange.get()));
         }
     }
 }

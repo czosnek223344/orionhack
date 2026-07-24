@@ -5,6 +5,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -13,6 +14,7 @@ import net.minecraft.util.math.Vec3d;
 
 public class EChestLinkUtil {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
+
     private static BlockPos targetEC = null;
     private static int tickCounter = 0;
     private static boolean opening = false;
@@ -88,17 +90,46 @@ public class EChestLinkUtil {
         return closest;
     }
 
+    // Take mace from EC to hotbar empty slot
     public static void get(String itemName) {
         if (mc.player == null || mc.currentScreen == null) return;
-        String lowerName = itemName.toLowerCase();
+        String lower = itemName.toLowerCase();
+
         for (int i = 0; i < mc.player.currentScreenHandler.slots.size(); i++) {
             ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
-            if (stack.getItem() == Items.MACE || 
-                stack.getName().getString().toLowerCase().contains(lowerName)) {
-                // TODO: Add actual click logic to take item out (quick move etc.)
-                // For now just logs - implement packet clicks as needed
-                System.out.println("Found mace at slot " + i);
-                break;
+            if (stack.getItem() == Items.MACE || stack.getName().getString().toLowerCase().contains(lower)) {
+                // Find empty hotbar slot
+                for (int h = 0; h < 9; h++) {
+                    if (mc.player.getInventory().getStack(h).isEmpty()) {
+                        mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, i, h, SlotActionType.SWAP, mc.player);
+                        return;
+                    }
+                }
+                System.out.println("[EChestLink] No empty hotbar slot!");
+                return;
+            }
+        }
+        System.out.println("[EChestLink] Mace not found!");
+    }
+
+    // Hide item (mace) in empty EC slot
+    public static void hide(String itemName) {
+        if (mc.player == null || mc.currentScreen == null) return;
+        String lower = itemName.toLowerCase();
+
+        // Find mace in inventory
+        for (int i = 9; i < mc.player.currentScreenHandler.slots.size(); i++) {  // skip hotbar
+            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
+            if (stack.getItem() == Items.MACE || stack.getName().getString().toLowerCase().contains(lower)) {
+                // Find empty slot in EC
+                for (int e = 0; e < 27; e++) {  // EC has 27 slots
+                    if (mc.player.currentScreenHandler.getSlot(e).getStack().isEmpty()) {
+                        mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, i, e, SlotActionType.SWAP, mc.player);
+                        return;
+                    }
+                }
+                System.out.println("[EChestLink] No empty slot in EC!");
+                return;
             }
         }
     }

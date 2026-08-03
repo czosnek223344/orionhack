@@ -1,18 +1,20 @@
 package com.orionhack.addon.modules;
 
 import com.orionhack.addon.OrionHack;
+import com.orionhack.addon.utils.EChestLinkUtil;
 import com.orionhack.addon.utils.MaceKillUtil;
 import com.orionhack.addon.utils.PredictionUtil;
 import com.orionhack.addon.utils.TPUtil;
 import com.orionhack.addon.utils.TargetUtil;
 import meteordevelopment.meteorclient.events.world.TickEvent;
-import meteordevelopment.meteorclient.settings.DoubleSetting;
-import meteordevelopment.meteorclient.settings.KeybindSetting;
-import meteordevelopment.meteorclient.settings.Setting;
-import meteordevelopment.meteorclient.settings.SettingGroup;
+import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Module;
+import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.utils.misc.Keybind;
+import meteordevelopment.meteorclient.utils.player.InvUtils;
+import meteordevelopment.meteorclient.utils.player.FindItemResult;
 import meteordevelopment.orbit.EventHandler;
+import net.minecraft.item.Items;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 
@@ -51,13 +53,34 @@ public class TPAttack extends Module {
         .build()
     );
 
+    public enum MaceMode {
+        AlwaysSwitch,
+        EchestIfLinked
+    }
+
+    private final Setting<MaceMode> maceMode = sgGeneral.add(new EnumSetting.Builder<MaceMode>()
+        .name("mace-mode")
+        .description("AlwaysSwitch = normal hotbar swap. EchestIfLinked = use EChestLinkUtil get/hide when AutoEchestLink is active.")
+        .defaultValue(MaceMode.AlwaysSwitch)
+        .build()
+    );
+
+    private final Setting<Boolean> swapBack = sgGeneral.add(new BoolSetting.Builder()
+        .name("swap-back")
+        .description("Swap back to previous hotbar slot after attack (AlwaysSwitch mode).")
+        .defaultValue(true)
+        .build()
+    );
+
     private boolean wasPressed = false;
     private boolean autoAttackWasPressed = false;
     private boolean autoAttackActive = false;
     private long lastAttackTime = 0;
 
+    private int previousSlot = -1;
+
     public TPAttack() {
-        super(OrionHack.CATEGORY, "tp-attack", "Idk how this ai slop even works.");
+        super(OrionHack.CATEGORY, "tp-attack", "TP + mace attack with auto switch / echest support.");
     }
 
     @EventHandler
@@ -90,9 +113,36 @@ public class TPAttack extends Module {
         var target = TargetUtil.getClosestBlacklisted(maxRange.get());
         if (target == null) return;
 
-        Vec3d targetPos = PredictionUtil.getPredictedPos(target, 2.0);
+        boolean usedEchest = false;
 
+        // Mace handling
+        if (maceMode.get() == MaceMode.EchestIfLinked && isEchestLinked()) {
+            EChestLinkUtil.get("mace");
+            usedEchest = true;
+        } else {
+            // Normal hotbar switch
+            FindItemResult mace = InvUtils.findInHotbar(Items.MACE);
+            if (mace.found()) {
+                previousSlot = mc.player.getInventory().selectedSlot;
+                InvUtils.swap(mace.slot(), false);
+            }
+        }
+
+        Vec3d targetPos = PredictionUtil.getPredictedPos(target, 2.0);
         TPUtil.tpTo(targetPos);
         MaceKillUtil.hit(target);
+
+        // Cleanup
+        if (usedEchest) {
+            EChestLinkUtil.hide("mace");
+        } else if (swapBack.get() && previousSlot != -1) {
+            InvUtils.swap(previousSlot, false);
+            previousSlot = -1;
+        }
+    }
+
+    private boolean isEchestLinked() {
+        AutoEchestLink link = Modules.get().get(AutoEchestLink.class);
+        return link != null && link.isActive();
     }
 }

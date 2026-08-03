@@ -13,6 +13,8 @@ OrionHack Addon for meteor client 1.21.11
 
 **HitBack** Attacks blacklisted players when they touch you.
 
+**Move** Tp up set blocks on set bind click.
+
 # commands and other info
 
 **commands**
@@ -39,11 +41,20 @@ Then drop into mods folder with meteor for 1.21.11
 
 # To do:
 
-⬛ HitBack fix
+ - ✅ move
+ - ✅ ec link
+ - ⬛ disabler
+ - ⬛ that thing that tp you around freecam fast
+ - ⬛ totem bypass
+ - ⬛ spearkill
+ - ⬛ hud elements
+ - ⬛ target settings
+ - ⬛ tp back in tp attack
+ - ✅ rat
+ - ⬛ click tp
+ - ⬛ auto s*x
 
-⬛ More modules
-
-⬛ make ts code not scare java compiler
+❌ make ts code not scare java compiler
 
 
 

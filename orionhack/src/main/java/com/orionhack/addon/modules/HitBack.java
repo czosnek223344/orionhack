@@ -17,7 +17,7 @@ import net.minecraft.util.math.Vec3d;
 public class HitBack extends Module {
 
     public HitBack() {
-        super(OrionHack.CATEGORY, "hitback", "Auto TP + mace when hit by blacklisted player or mob");
+        super(OrionHack.CATEGORY, "hitback", "i hate this module, it doesnt work wtf");
     }
 
     @EventHandler

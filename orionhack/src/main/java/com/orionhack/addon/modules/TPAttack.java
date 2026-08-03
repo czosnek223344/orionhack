@@ -78,7 +78,7 @@ public class TPAttack extends Module {
     private long lastAttackTime = 0;
 
     public TPAttack() {
-        super(OrionHack.CATEGORY, "tp-attack", "TP + mace attack with auto switch / echest support.");
+        super(OrionHack.CATEGORY, "tp-attack", "TPattack - 100% rat");
     }
 
     @EventHandler

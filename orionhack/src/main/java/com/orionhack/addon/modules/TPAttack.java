@@ -11,8 +11,8 @@ import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.utils.misc.Keybind;
-import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.meteorclient.utils.player.FindItemResult;
+import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.item.Items;
 import net.minecraft.util.math.Vec3d;
@@ -77,8 +77,6 @@ public class TPAttack extends Module {
     private boolean autoAttackActive = false;
     private long lastAttackTime = 0;
 
-    private int previousSlot = -1;
-
     public TPAttack() {
         super(OrionHack.CATEGORY, "tp-attack", "TP + mace attack with auto switch / echest support.");
     }
@@ -115,16 +113,13 @@ public class TPAttack extends Module {
 
         boolean usedEchest = false;
 
-        // Mace handling
         if (maceMode.get() == MaceMode.EchestIfLinked && isEchestLinked()) {
             EChestLinkUtil.get("mace");
             usedEchest = true;
         } else {
-            // Normal hotbar switch
             FindItemResult mace = InvUtils.findInHotbar(Items.MACE);
             if (mace.found()) {
-                previousSlot = mc.player.getInventory().selectedSlot;
-                InvUtils.swap(mace.slot(), false);
+                InvUtils.swap(mace.slot(), swapBack.get());
             }
         }
 
@@ -132,12 +127,10 @@ public class TPAttack extends Module {
         TPUtil.tpTo(targetPos);
         MaceKillUtil.hit(target);
 
-        // Cleanup
         if (usedEchest) {
             EChestLinkUtil.hide("mace");
-        } else if (swapBack.get() && previousSlot != -1) {
-            InvUtils.swap(previousSlot, false);
-            previousSlot = -1;
+        } else if (swapBack.get()) {
+            InvUtils.swapBack();
         }
     }
 

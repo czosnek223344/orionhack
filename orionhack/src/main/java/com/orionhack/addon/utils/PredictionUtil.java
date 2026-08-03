@@ -8,65 +8,63 @@ import net.minecraft.util.math.Vec3d;
 public class PredictionUtil {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
-    // Below this speed we treat the player as stationary (no prediction)
     private static final double MIN_SPEED = 0.05;
-
-    // Hard limit so packet-fly / life-overflow never yeets you across the map
     private static final double MAX_SPEED_CLAMP = 14.0;
-
-    // How much extra we trust vertical motion (people packet-fly up a lot)
     private static final double VERTICAL_BIAS = 0.65;
 
     public static Vec3d getPredictedPos(PlayerEntity target, double ticks) {
         if (target == null || mc.player == null) return null;
 
-        Vec3d pos = target.getPos();
-        Vec3d vel = target.getVelocity();
+        double tx = target.getX();
+        double ty = target.getY();
+        double tz = target.getZ();
 
+        Vec3d vel = target.getVelocity();
         double speed = vel.length();
 
-        // Completely still or barely moving → just use current position
+        // Almost still → no prediction
         if (speed < MIN_SPEED) {
-            return pos;
+            return new Vec3d(tx, ty, tz);
         }
 
-        // Distance-based latency compensation (farther = more ticks)
+        // Distance + closing latency
         double dist = mc.player.distanceTo(target);
         double latency = MathHelper.clamp(dist * 0.065, 0.0, 5.5);
 
-        // Slight extra when the target is moving toward us (better lead)
-        Vec3d toMe = mc.player.getPos().subtract(pos).normalize();
-        double closing = vel.normalize().dotProduct(toMe);
-        if (closing > 0.35) {
-            latency += 0.6;
+        double dxToMe = mc.player.getX() - tx;
+        double dyToMe = mc.player.getY() - ty;
+        double dzToMe = mc.player.getZ() - tz;
+        double len = Math.sqrt(dxToMe * dxToMe + dyToMe * dyToMe + dzToMe * dzToMe);
+        if (len > 0.001) {
+            double nx = dxToMe / len;
+            double ny = dyToMe / len;
+            double nz = dzToMe / len;
+            double closing = (vel.x * nx + vel.y * ny + vel.z * nz);
+            if (closing > 0.35) latency += 0.6;
         }
 
         double totalTicks = ticks + latency;
 
-        // Clamp insane packet-fly / overflow velocities
+        // Clamp packet-fly / overflow speeds
         if (speed > MAX_SPEED_CLAMP) {
-            vel = vel.normalize().multiply(MAX_SPEED_CLAMP);
+            double scale = MAX_SPEED_CLAMP / speed;
+            vel = new Vec3d(vel.x * scale, vel.y * scale, vel.z * scale);
         }
 
-        // Separate horizontal / vertical so we can bias Y
         double dx = vel.x * totalTicks;
         double dy = vel.y * totalTicks;
         double dz = vel.z * totalTicks;
 
-        // Extra vertical lead when flying up hard (common on anarchy)
+        // Vertical bias for rising packet-fly
         if (vel.y > 0.25) {
             dy += vel.y * VERTICAL_BIAS * Math.min(totalTicks, 4.0);
         }
 
-        // Tiny gravity compensation when falling so we don't undershoot
+        // Small gravity compensation when falling
         if (vel.y < -0.15) {
             dy -= 0.08 * totalTicks;
         }
 
-        return new Vec3d(
-            pos.x + dx,
-            pos.y + dy,
-            pos.z + dz
-        );
+        return new Vec3d(tx + dx, ty + dy, tz + dz);
     }
 }

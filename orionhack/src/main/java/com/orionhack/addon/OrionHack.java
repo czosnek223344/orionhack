@@ -3,7 +3,7 @@ package com.orionhack.addon;
 import com.orionhack.addon.commands.BlacklistCommand;
 import com.orionhack.addon.hud.OrionHud;
 import com.orionhack.addon.modules.TPAttack;
-import com.orionhack.addon.modules.move;
+import com.orionhack.addon.modules.Move;
 import com.orionhack.addon.modules.BetterNoFall;
 import com.orionhack.addon.modules.AutoEchestLink;
 import com.orionhack.addon.modules.Settings;
@@ -32,7 +32,7 @@ public class OrionHack extends MeteorAddon {
 
         Modules.get().add(new TPAttack());
         Modules.get().add(new AutoEchestLink());
-        Modules.get().add(new move());
+        Modules.get().add(new Move());
         Modules.get().add(new BetterNoFall());
         Modules.get().add(new Settings());
         Modules.get().add(new HitBack());

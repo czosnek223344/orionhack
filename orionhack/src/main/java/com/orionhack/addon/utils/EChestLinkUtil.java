@@ -1,157 +1,121 @@
 package com.orionhack.addon.utils;
-
+import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
+import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * High-quality TP utility for Anarchy / No-AC servers.
- * Inspired by LiveOverflow's bypass techniques.
- * 
- * Features:
- * - 10 blocks per packet stepping.
- * - Bidirectional raycasting to calculate horizontal block thickness.
- * - Allows phasing through 1 block horizontally.
- * - Dynamically routes vertically over thick obstructions (pure vertical phasing).
- */
-public class TPUtil {
-    private static final MinecraftClient mc = MinecraftClient.getInstance();
-    
-    // Max blocks per packet (Vanilla No-AC strictly limits to 10.0 blocks per tick/packet)
-    private static final double MAX_STEP = 10.0;
-
-    public static void tpTo(Vec3d target) {
-        if (mc.player == null || mc.world == null) return;
-
-        Vec3d start = mc.player.getPos();
-        
-        // Don't waste packets if we are already there
-        if (start.distanceTo(target) <= 0.1) return;
-
-        // Calculate the safest, most efficient path
-        List<Vec3d> waypoints = calculateSmartPath(start, target);
-
-        // Traverse the generated waypoints
-        for (int i = 1; i < waypoints.size(); i++) {
-            Vec3d from = waypoints.get(i - 1);
-            Vec3d to = waypoints.get(i);
-            sendSteps(from, to, i == waypoints.size() - 1); // Only final step might be onGround
-        }
-
-        // Apply final position locally to prevent desync
-        mc.player.setPosition(target);
-    }
-
-    public static void preparePath(Vec3d target) {
-        tpTo(target);
-    }
-
-    /**
-     * Slices a straight line between two waypoints into 10-block packet chunks.
-     */
-    private static void sendSteps(Vec3d from, Vec3d to, boolean isFinalWaypoint) {
-        double dist = from.distanceTo(to);
-        if (dist <= 0.01) return;
-
-        int steps = (int) Math.ceil(dist / MAX_STEP);
-        double stepX = (to.x - from.x) / steps;
-        double stepY = (to.y - from.y) / steps;
-        double stepZ = (to.z - from.z) / steps;
-
-        Vec3d current = from;
-
-        for (int i = 0; i < steps; i++) {
-            current = current.add(stepX, stepY, stepZ);
-            
-            // Set onGround to true ONLY on the absolute final packet if the player is landing
-            boolean onGround = isFinalWaypoint && (i == steps - 1) && mc.player.isOnGround();
-            sendPositionPacket(current, onGround);
-        }
-    }
-
-    /**
-     * Determines if we can go direct or if we need to route vertically to avoid horizontal clipping.
-     */
-    private static List<Vec3d> calculateSmartPath(Vec3d start, Vec3d target) {
-        List<Vec3d> path = new ArrayList<>();
-        path.add(start);
-
-        if (isDirectPathSafe(start, target)) {
-            // Direct path is clear or has <= 1 block of horizontal clipping
-            path.add(target);
-        } else {
-            // Thick obstruction detected. 
-            // Route perfectly vertically to a clear Y-level, move horizontally, then perfectly vertically down.
-            double safeY = findClearY(start, target);
-            
-            path.add(new Vec3d(start.x, safeY, start.z));     // Pure vertical phase UP
-            path.add(new Vec3d(target.x, safeY, target.z));   // Horizontal move in clear air
-            path.add(target);                                 // Pure vertical phase DOWN
-        }
-
-        return path;
-    }
-
-    /**
-     * Bidirectional raycaster: Fires a ray from A->B and B->A.
-     * If an obstruction is found, it calculates the distance between the front-face and back-face hits.
-     * Returns true if the path has NO obstructions, OR if the obstruction is <= 1 block thick horizontally.
-     */
-    private static boolean isDirectPathSafe(Vec3d start, Vec3d end) {
-        // Front-to-back raycast
-        RaycastContext forwardCtx = new RaycastContext(start, end, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, mc.player);
-        BlockHitResult forwardHit = mc.world.raycast(forwardCtx);
-
-        if (forwardHit.getType() == HitResult.Type.MISS) {
-            return true; // No obstruction at all
-        }
-
-        // Back-to-front raycast to find the exit point of the wall
-        RaycastContext reverseCtx = new RaycastContext(end, start, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, mc.player);
-        BlockHitResult reverseHit = mc.world.raycast(reverseCtx);
-
-        if (forwardHit.getType() == HitResult.Type.BLOCK && reverseHit.getType() == HitResult.Type.BLOCK) {
-            // Calculate horizontal thickness (ignore Y difference since vertical phasing is allowed)
-            double dx = forwardHit.getPos().x - reverseHit.getPos().x;
-            double dz = forwardHit.getPos().z - reverseHit.getPos().z;
-            double horizontalThickness = Math.sqrt(dx * dx + dz * dz);
-
-            // 1.2 tolerance allows for diagonal passes through a 1x1 block pillar/wall
-            return horizontalThickness <= 1.2; 
-        }
-
-        return false;
-    }
-
-    /**
-     * Scans upwards to find a Y level where horizontal movement to the target X/Z is completely unobstructed.
-     */
-    private static double findClearY(Vec3d start, Vec3d target) {
-        double startY = Math.max(start.y, target.y) + 1.0;
-        double maxSearchY = mc.world.getTopY() + 5.0; // Pushes to world roof if underground is solid
-
-        for (double currentY = startY; currentY <= maxSearchY; currentY += 1.0) {
-            Vec3d testStart = new Vec3d(start.x, currentY, start.z);
-            Vec3d testEnd = new Vec3d(target.x, currentY, target.z);
-
-            if (isDirectPathSafe(testStart, testEnd)) {
-                return currentY;
-            }
-        }
-        
-        return maxSearchY; // Failsafe: Go strictly above the world ceiling
-    }
-
-    private static void sendPositionPacket(Vec3d pos, boolean onGround) {
-        // Using your exact 5-arg packet signature, passing our calculated onGround state
-        mc.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(
-            pos.x, pos.y, pos.z, onGround, false
-        ));
-    }
+public class EChestLinkUtil {
+    private static final MinecraftClient mc = MinecraftClient.getInstance();
+    private static BlockPos targetEC = null;
+    private static int tickCounter = 0;
+    private static boolean opening = false;
+    public static boolean open(Vec3d coords) {
+        if (mc.player == null || mc.world == null) return false;
+        BlockPos pos = new BlockPos((int) coords.x, (int) coords.y - 1, (int) coords.z);
+        targetEC = pos;
+        opening = true;
+        tickCounter = 0;
+        return true;
+    }
+    public static void tick() {
+        if (!opening || mc.player == null || targetEC == null) return;
+        Vec3d targetPos = new Vec3d(targetEC.getX(), targetEC.getY() + 2, targetEC.getZ());
+        TPUtil.tpTo(targetPos);
+        if (isAtPosition(targetPos)) {
+            tickCounter++;
+            if (tickCounter >= 3) {
+                openEC(targetEC);
+                opening = false;
+                targetEC = null;
+            }
+        } else {
+            tickCounter = 0;
+        }
+    }
+    private static boolean isAtPosition(Vec3d target) {
+        if (mc.player == null) return false;
+        return new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ()).squaredDistanceTo(target) < 0.01;
+    }
+    private static void openEC(BlockPos pos) {
+        if (mc.player == null) return;
+        for (int i = 0; i < 8; i++) {
+            BlockHitResult hitResult = new BlockHitResult(Vec3d.ofCenter(pos), Direction.UP, pos, false);
+            PlayerInteractBlockC2SPacket packet = new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, hitResult, 0);
+            mc.player.networkHandler.sendPacket(packet);
+            if (mc.interactionManager != null) mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
+        }
+    }
+    public static boolean isOpening() {
+        return opening;
+    }
+    public static Vec3d findNearestEC(double maxRange) {
+        if (mc.world == null || mc.player == null) return null;
+        Vec3d playerPos = new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
+        BlockPos playerBlockPos = mc.player.getBlockPos();
+        Vec3d closest = null;
+        double closestDist = Double.MAX_VALUE;
+        int range = (int) Math.min(32, Math.ceil(maxRange));
+        for (int x = -range; x <= range; x++) {
+            for (int y = -range / 2; y <= range / 2; y++) {
+                for (int z = -range; z <= range; z++) {
+                    BlockPos check = playerBlockPos.add(x, y, z);
+                    if (mc.world.getBlockState(check).getBlock() == Blocks.ENDER_CHEST) {
+                        Vec3d ecPos = new Vec3d(check.getX() + 0.5, check.getY() + 1, check.getZ() + 0.5);
+                        double distSq = playerPos.squaredDistanceTo(ecPos);
+                        if (distSq < closestDist && Math.sqrt(distSq) <= maxRange) {
+                            closestDist = distSq;
+                            closest = ecPos;
+                        }
+                    }
+                }
+            }
+        }
+        return closest;
+    }
+    // Take mace from EC to hotbar empty slot
+    public static void get(String itemName) {
+        if (mc.player == null || mc.currentScreen == null) return;
+        String lower = itemName.toLowerCase();
+        for (int i = 0; i < mc.player.currentScreenHandler.slots.size(); i++) {
+            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
+            if (stack.getItem() == Items.MACE || stack.getName().getString().toLowerCase().contains(lower)) {
+                // Find empty hotbar slot
+                for (int h = 0; h < 9; h++) {
+                    if (mc.player.getInventory().getStack(h).isEmpty()) {
+                        mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, i, h, SlotActionType.SWAP, mc.player);
+                        return;
+                    }
+                }
+                System.out.println("[EChestLink] No empty hotbar slot!");
+                return;
+            }
+        }
+        System.out.println("[EChestLink] Mace not found!");
+    }
+    // Hide item (mace) in empty EC slot
+    public static void hide(String itemName) {
+        if (mc.player == null || mc.currentScreen == null) return;
+        String lower = itemName.toLowerCase();
+        // Find mace in inventory
+        for (int i = 9; i < mc.player.currentScreenHandler.slots.size(); i++) { // skip hotbar
+            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
+            if (stack.getItem() == Items.MACE || stack.getName().getString().toLowerCase().contains(lower)) {
+                // Find empty slot in EC
+                for (int e = 0; e < 27; e++) { // EC has 27 slots
+                    if (mc.player.currentScreenHandler.getSlot(e).getStack().isEmpty()) {
+                        mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, i, e, SlotActionType.SWAP, mc.player);
+                        return;
+                    }
+                }
+                System.out.println("[EChestLink] No empty slot in EC!");
+                return;
+            }
+        }
+    }
 }

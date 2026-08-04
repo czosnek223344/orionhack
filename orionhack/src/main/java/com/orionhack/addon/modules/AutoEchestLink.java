@@ -25,7 +25,7 @@ public class EChestLinkUtil {
     }
     public static void tick() {
         if (!opening || mc.player == null || targetEC == null) return;
-        Vec3d targetPos = new Vec3d(targetEC.getX() + 0.5, targetEC.getY() + 2, targetEC.getZ() + 0.5);
+        Vec3d targetPos = new Vec3d(targetEC.getX(), targetEC.getY() + 2, targetEC.getZ());
         TPUtil.tpTo(targetPos);
         if (isAtPosition(targetPos)) {
             tickCounter++;

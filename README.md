@@ -37,7 +37,7 @@ Turn on settings module and set mace attack height.
 
 Then drop into mods folder with meteor for 1.21.11
 
-**DO NOT USE Trouser streake macekill with this addon**
+**DO NOT USE Trouser streak macekill with this addon**
 
 # To do:
 

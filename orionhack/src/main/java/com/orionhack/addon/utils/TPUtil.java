@@ -11,7 +11,7 @@ public class TPUtil {
     public static void tpTo(Vec3d target) {
         if (mc.player == null || mc.getNetworkHandler() == null) return;
 
-        Vec3d start = mc.player.getPos();
+        Vec3d start = new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
         double dist = start.distanceTo(target);
         if (dist < 0.05) return;
 
@@ -31,7 +31,7 @@ public class TPUtil {
     public static void tpTo(Vec3d target, float yaw, float pitch) {
         if (mc.player == null || mc.getNetworkHandler() == null) return;
 
-        Vec3d start = mc.player.getPos();
+        Vec3d start = new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ());
         double dist = start.distanceTo(target);
 
         if (dist < 0.05) {
